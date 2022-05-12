@@ -1,0 +1,30 @@
+[Japanese]
+必要に応じて、このフォルダにSusieプラグインを用意してください。
+Susieプラグインの読み込みは、[設定|デコーダ|Susieプラグイン]からコントロールできます。
+
+※仕様
+FineViewが対応している形式と重複するプラグインが存在する場合プラグインを優先して使用します。
+ただし、JPEGに関しては、JPEGデコーダの選択で指定したライブラリ（IJG,IJL,SPI）を優先して使用します。
+使用するプラグインを限定したい場合、使用するプラグインをこのフォルダに用意し、[Susieのインストール先を検索する]のチェックをハズしてください。
+
+Susieプラグインは、FineViewで対応してない画像形式を表示させたいときに使用してください。
+あるいは、FineViewの内部デコーダに問題がある場合に、デコーダを置き換えるといった使い方もできます。
+
+
+######################################################################
+[English]
+This folder for the susie-plugins. Please put susie-plugins on this folder.
+
+'Susie' is Japanese popular image viewer. This viewer is supporting a lot of 
+picture file-format by using plug-in.
+Many of sites which have distributed these plug-in are Japan.
+I do not know whether there is any site which is introducing these plug-in
+ in the English area. :(
+
+When a good englsih-site is not found, required plug-in may be able to be got 
+by the following method.
+The name of plug-in of JPEG becomes like ifJPEG.spi.
+Similarly, in TGA, it is ifTGA.spi.
+If you really need, please try to search using GOOGLE.
+Sorry, my awful English. :|
+

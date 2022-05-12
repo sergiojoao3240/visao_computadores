@@ -1,0 +1,115 @@
+Imagem com 1 canal, 8bpp, e resolução 4x4:
+ 
+			 -------------------
+			| 20 | 40 | 60 | 80 |
+			 -------------------
+			| 20 | 40 | 60 | 80 |
+			 -------------------
+			| 20 | 40 | 60 | 80 |
+			 -------------------
+			| 20 | 40 | 60 | 80 |
+			 -------------------
+			 
+n = 4 * 4 = 16
+
+pdf(0) = n0 / n = 0 / 16 = 0
+pdf(1) = n1 / n = 0 / 16 = 0
+...
+pdf(20) = n20 / n = 4 / 16 = 0.25
+...
+pdf(40) = n40 / n = 4 / 16 = 0.25
+...
+pdf(60) = n60 / n = 4 / 16 = 0.25
+...
+pdf(80) = n80 / n = 4 / 16 = 0.25
+...
+pdf(255) = n255 / n = 0 / 16 = 0
+
+cdf(0) = pdf(0)
+cdf(1) = pdf(0) + pdf(1) = cdf(0) + pdf(1)
+cdf(2) = pdf(0) + pdf(1) + pdf(2) = cdf(1) + pdf(2)
+cdf(3) = pdf(0) + pdf(1) + pdf(2) + pdf(3) = cdf(2) + pdf(3)
+...
+cdf(255) = cdf(254) + pdf(255)
+
+-----
+
+if(i == 0) cdf[i] = pdf[i];
+else cdf[i] = cdf[i - 1] + pdf[i];
+
+-----
+
+cdf[0] = 0;
+cdf[1] = cdf[0] + pdf[1] = 0 + 0 = 0
+...
+cdf[19] = cdf[18] + pdf[19] = 0;
+cdf[20] = cdf[19] + pdf[20] = 0 + 0.25 = 0.25;
+...
+cdf[39] = cdf[38] + pdf[39] = 0.25 + 0 = 0.25
+cdf[40] = cdf[39] + pdf[40] = 0.25 + 0.25 = 0.5
+...
+cdf[60] = cdf[59] + pdf[60] = 0.5 + 0.25 = 0.75
+...
+cdf[80] = cdf[79] + pdf[80] = 0.75 + 0.25 = 1
+...
+cdf[255] = 1
+
+
+cdfmin = ?
+Qual o primeiro valor de cdf que é diferente de zero?
+É o cdf de 20.
+cdfmin = cdf[20] = 0.25
+
+Sendo f(x,y) o valor de um pixel na imagem de entrada, dada a coluna x e a linha y, então vamos considerar que:
+f(x,y) = 20
+Qual o valor para esse pixel, na imagem de saída?
+g(x,y) = ?
+
+g(x,y) = (cdf[ f(x,y) ] - cdfmin) / (1 - cdfmin) * (L - 1)
+
+g(x,y) = (cdf[20] - cdfmin) / (1 - cdfmin) * (256 - 1) =
+       = (0.25 - 0.25) / (1 - 0.25) * 255 =
+	   = 0
+Então,
+g(x,y) = 0
+
+
+E se f(x,y) = 40
+Qual o valor para esse pixel, na imagem de saída?
+g(x,y) = ?
+
+g(x,y) = (cdf[40] - cdfmin) / (1 - cdfmin) * (256 - 1) =
+       = (0.5 - 0.25) / (1 - 0.25) * 255 =
+	   = 0.33 * 255 =
+	   = 84
+Então,
+g(x,y) = 84
+
+
+E se f(x,y) = 60
+Qual o valor para esse pixel, na imagem de saída?
+g(x,y) = ?
+
+g(x,y) = (cdf[60] - cdfmin) / (1 - cdfmin) * (256 - 1) =
+       = (0.75 - 0.25) / (1 - 0.25) * 255 =
+	   = 0.66 * 255 =
+	   = 168
+Então,
+g(x,y) = 168
+
+
+E se f(x,y) = 80
+Qual o valor para esse pixel, na imagem de saída?
+g(x,y) = ?
+
+g(x,y) = (cdf[80] - cdfmin) / (1 - cdfmin) * (256 - 1) =
+       = (1 - 0.25) / (1 - 0.25) * 255 =
+	   = 1 * 255 =
+	   = 255
+Então,
+g(x,y) = 255
+
+
+
+
+

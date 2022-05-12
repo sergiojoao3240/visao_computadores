@@ -1,0 +1,50 @@
+1.º Passo:
+----------
+int ni[256] = { 0 };
+Contar número de pixeis para cada valor de brilho
+ni[0] = ?
+ni[1] = ?
+...
+ni[255] = ?
+Podemos efetuar essa contagem com o seguinte código:
+for (int i = 0; i < width * height; ni[datasrc[i++]]++);
+NOTA: Para facilitar a geração do gráfico, considere que a imagem onde será desenhado o gráfico terá uma resolução de 256*256.
+
+2.º Passo:
+----------
+float pdf[256];
+int n = width * height; // Número de pixeis na imagem = resolução da imagem
+Calcular a função densidade de probabilidade, isto é, pdf(), para cada valor de brilho
+pdf[0] = (float) ni[0] / (float) n;
+pdf[1] = (float) ni[1] / (float) n;
+...
+pdf[255] = (float) ni[255] / (float) n;
+
+3.º Passo:
+----------
+Assumindo que a imagem de saída (onde se pretende desenhar o gráfico com o histograma) tem uma resolução de 256x256, então
+vamos garantir que o indíce do brilho em que se verificou o maior valor de pixeis, isto é, onde o pdf() é maior,
+corresponderá a uma linha verticar que será desenhada do fundo da imagem até ao topo.
+Assim, é necessário calcular o pdf máximo.
+float pfdmax; // Percorrer de pdf[0] a pdf[255] e encontrar qual o valor máximo. Esse valor será atribuído a pdfmax.
+
+4.º Passo:
+----------
+Podemos agora criar um array onde cada elemento está normalizado entre 0 e 1. O valor 1 corresponderá ao brilho em que se verificou o pdfmax.
+float pfdnorm[256];
+pdfnorm[0] = pdf[0] / pdfmax;
+pdfnorm[1] = pdf[1] / pdfmax;
+...
+pdfnorm[255] = pdf[255] / pdfmax;
+
+5.º Passo:
+----------
+(Nota que a imagem de saída deverá ter uma resolução de 256x256.)
+Gerar o gráfico na imagem.
+for (int i = 0; i < 256 * 256; i++)
+	datadst[i] = 0;
+for (int x = 0; x < 256; x++) {
+	for (y = (256 - 1); y >= (256 - 1) - pdfnorm[x] * 255; y--) {
+		datadst[y * 256 + x] = 255;
+	}
+}
