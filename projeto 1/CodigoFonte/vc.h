@@ -113,11 +113,11 @@ int vc_binary_blob_info(IVC *src, OVC *blobs, int nblobs);
 //inverter o preto para branco e o branco para preto
 int vc_inveter(IVC *src, IVC *dst);
 
-//Desenhar a caixa em todosos objetos
+//Desenhar a caixa em todosos objetos-> Não funciona
 int vc_mark_blobs(IVC* src, IVC* dst, OVC* blobs, int nblobs);
 
 
-//Desenhar caixa no maior blob
+//Desenhar caixa no maior blob -> Não feito
 int vc_CaixaBlob(IVC *src, IVC *dst, OVC* blobs, int nblobs, int *maiorBlob);
 
 //Fazer o histograma do cinzento de uma imagem
@@ -132,3 +132,11 @@ int vc_gray_edge_prewitt(IVC *src, IVC *dst, float th);
 int vc_gray_lowpass_mean_filter(IVC *src, IVC *dst,int kernel);
 
 int vc_gray_lowpass_median_filter(IVC *src, IVC *dst,int kernel);
+
+
+// Por ver ainda
+int vc_gray_lowpass_gaussian_filter(IVC *src, IVC *dst);
+
+int vc_gray_highpass_filter(IVC *src, IVC *dst);
+
+

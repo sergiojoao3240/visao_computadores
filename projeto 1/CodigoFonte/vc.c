@@ -1943,26 +1943,53 @@ int vc_gray_lowpass_mean_filter(IVC *src, IVC *dst,int kernel)
 }
 
 
+void vc_insertionSort(int vizinhos[], int tamanho)
+{
+	int i, j, valor;
 
+	for(i=1; i < tamanho; i++)
+	{
+		valor = vizinhos[i];
 
-void vc_insertionSort(int array[], int tamanho)  
-{  
-  int i, j, min, swap; 
-  for (i = 0; i > (tamanho-1); i++)
-   { 
-    min = i; 
-    for (j = (i+1); j > tamanho; j++) { 
-      if(array[j] > array[min]) { 
-        min = j; 
-      } 
-    } 
-    if (i != min) { 
-      swap = array[i]; 
-      array[i] = array[min]; 
-      array[min] = swap; 
-    } 
-  } 
+		j = i - 1;
+
+		while(j >= 0 && vizinhos[j] > valor)
+		{
+			vizinhos[j+1] = vizinhos[j];
+			j--;
+		}
+		vizinhos[j+1] = valor;
+	}
 }
+
+
+/*
+// Ordenar um array com o algoritmo de insertion sort
+void vc_insertionSort(int array[], int tamanho)
+{
+	int i, j, atual;
+
+	// Percorrer elementos não ordenados
+	for (i = 1; i < tamanho; i++)
+	{
+		// Elemento a ser comparado com os anteriores
+		atual = array[i];
+
+		j = i - 1;
+		// Percorrer elementos ordenados com índice menor que o atual e valor maior que o atual
+		while (j >= 0 && array[j] > atual)
+		{
+			// Move o elemento um índice para a frente
+			array[j + 1] = array[j];
+			// Continua a percorrer de forma descendente
+			j--;
+		}
+		// Finalmente, coloca-se o elemento atual na posição correta na parte ordenada do array
+		array[j + 1] = atual;
+	}
+}
+*/
+
 
 //verificar se está correto
 int vc_gray_lowpass_median_filter(IVC *src, IVC *dst,int kernel)
@@ -1985,13 +2012,12 @@ int vc_gray_lowpass_median_filter(IVC *src, IVC *dst,int kernel)
 	if (channels != 1) return 0;
 	if ((kernel <= 1) || (kernel% 2 == 0)) return 0;
 
-	for (y = 1; y < height; y++)
+	for (y = 0; y < height; y++)
 	{
-		for (x = 1; x < width; x++)
+		for (x = 0; x < width; x++)
 		{
 			pos = y * bytesperline + x * channels;
 
-		
 			for (ky = -offset; ky <= offset; ky++)
 			{
 				for (kx = -offset; kx <= offset; kx++)
@@ -2000,7 +2026,6 @@ int vc_gray_lowpass_median_filter(IVC *src, IVC *dst,int kernel)
 					{
 						posk = (y + ky) * bytesperline + (x + kx) * channels;
 
-						
 						vizinhos[vizinhosCount] = (int) data[posk];
 						vizinhosCount++;
 					}
@@ -2009,7 +2034,7 @@ int vc_gray_lowpass_median_filter(IVC *src, IVC *dst,int kernel)
 			// Ordenar vizinhos de acordo com o seu valor
 			vc_insertionSort(vizinhos, vizinhosCount);
 
-			// Valor da mediana
+			// posicao da mediana
 			centro = tamanhoVizinhos / 2;
 
 			datadst[pos] = (unsigned char)vizinhos[centro];
@@ -2042,67 +2067,71 @@ int vc_drawline(IVC *src, IVC *dst, int x, int y)
 
 
 
-// ver se dá para alterar mais de maneira a ficar diferente 
-int vc_gray_lowpass_gaussian_filter(IVC *src, IVC *dst){
-	unsigned char *datasrc =(unsigned char *) src->data;
-    int bytesperline_src = src->width * src->channels;
-    unsigned char *datadst =(unsigned char *) dst->data;
-    int bytesperline_dst = dst->width * dst->channels;
-    int channels_dst = dst->channels;
-	int channels_src = src->channels;
-    int width = src->width;
-    int height = src->height;
-    int x, y;
-	int channels = src->channels;
-	int soma;
-	long int pos_src, pos_dst, pos_brilho, pos;
-	// array fixo de tamanho 5*5 - dentro vou ter vários objetos - cada um representa uma linha
-	int mask [5][5] = {
-		{1,4,7,4,1},
-		{4,16,26,16,4},
-		{7,26,41,26,7},
-		{4,16,26,16,4},
-		{1,4,7,4,1}
-	}; 
+// ver se dá para alterar mais de maneira a ficar diferente
 
-	int offset = 2; // por o kernel ser sempre 5*5 - do central para cima há 2 pixeis
+int vc_gray_lowpass_gaussian_filter(IVC* src, IVC* dst)
+{
+	int kernelsize = 5;
+	unsigned char* data = (unsigned char*)src->data;
+	unsigned char* datadst = (unsigned char*)dst->data;
+	int width = src->width;
+	int height = src->height;
+	int bytesperline = src->bytesperline;
+	int channels = src->channels;
+	int x, y, ind = 0;
+	int offset = 2;
+	long int pos, pos_int;
+	float soma = 0, media;
 
 	// Verificação de erros
-	if ((src->width <= 0) || (src->height <= 0) || (src->data == NULL)) return 0;
-	if ((src->width != dst->width) || (src->height != dst->height) || (src->channels != dst->channels)) return 0;
+	if ((width <= 0) || (height <= 0) || (data == NULL) || (datadst == NULL)) return 0;
+	if ((width != dst->width) || (height != dst->height) || (channels != dst->channels)) return 0;
 	if (channels != 1) return 0;
 
-	for (y = 1; y<height - 1; y++)
-	{
-		for (x = 1; x<width - 1; x++)
-		{
-			pos_src = y * bytesperline_src + x * channels_src;
+	// Atribuir valores da máscara
+	int mascara[25] = { 1,4,7,4,1,
+					   4,16,26,16,4,
+					   7,26,41,26,7,
+					   4,16,26,16,4,
+					   1,4,7,4,1 };
 
+	// Percorrer píxeis da imagem original
+	for (y = 2; y < height; y++)
+	{
+		for (x = 2; x < width; x++)
+		{
+			pos = y * bytesperline + x;
+
+			soma = 0;
+			ind = 0;
 			// percorrer os pixeis dentro do kernel
-			for(int yk = -offset; yk<= offset ;yk++)
+			for (int yk = -offset; yk <= offset; yk++)
 			{
-				for(int xk = -offset; xk<= offset; xk++)
+				for (int xk = -offset; xk <= offset; xk++)
 				{
 					// ver se sai fora da imagem
-					if((y+yk >= 0) && (y+yk < height))
+					if ((y + yk >= 0) && (y + yk < height) && (x + xk >= 0) && (x + xk < width))
 					{
-						if((x+xk >=0) && (x+xk < width))
-						{
-							pos = (y+yk) * bytesperline_src + (x+xk) * channels_src;
-							pos_brilho = (float)datasrc[pos];
-							// mask[] vai descobrir o valor na posição da máscara e multiplica pela posição de origem
-							soma = mask[2+yk][2+xk] * datasrc[pos_src];
-						}
+						pos_int = (y + yk) * bytesperline + (x + xk);
+
+						soma += (float)data[pos_int] * (float)mascara[ind];
+						ind++;
 					}
 				}
 			}
-			datadst[pos_dst]  = soma / 273;
+
+			media = soma / 273;
+			datadst[pos] = media;
 		}
 	}
+
+	return 1;
 }
 
-// ver se dá para alterar mais de maneira a ficar diferente 
-int vc_gray_highpass_filter(IVC *src, IVC *dst){
+
+// ver se dá para alterar mais de maneira a ficar diferente
+int vc_gray_highpass_filter(IVC *src, IVC *dst)
+{
 	unsigned char *datasrc =(unsigned char *) src->data;
     int bytesperline_src = src->width * src->channels;
     unsigned char *datadst =(unsigned char *) dst->data;
@@ -2120,7 +2149,7 @@ int vc_gray_highpass_filter(IVC *src, IVC *dst){
 		{-1,-1,-1},
 		{-1,8,-1},
 		{-1,-1,-1}
-	}; 
+	};
 
 	int offset = 1; // por o kernel ser sempre 3*3 há 1 pixel para cima
 
@@ -2156,5 +2185,6 @@ int vc_gray_highpass_filter(IVC *src, IVC *dst){
 			datadst[pos_dst]  = soma / 9;
 		}
 	}
+	return 1;
 }
 

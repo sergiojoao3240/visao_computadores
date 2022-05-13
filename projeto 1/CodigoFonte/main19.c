@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "vc.h"
-// >>>>>>>>>>>>>>>> Função filter median <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// >>>>>>>>>>>>>>>> Função filter gaussian <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 int main(void)
 {
     IVC *image;
@@ -19,9 +19,9 @@ int main(void)
     image2 = vc_image_new(image->width,image->height,1,255);
 
 
-    vc_gray_lowpass_median_filter(image,image2,5);
+    vc_gray_lowpass_gaussian_filter(image,image2);
 
-    vc_write_image("img_filter_median.pgm", image2);
+    vc_write_image("img_filter_gaussian.pgm", image2);
 
     vc_image_free(image);
     vc_image_free(image2);
