@@ -1944,21 +1944,26 @@ int vc_gray_lowpass_mean_filter(IVC *src, IVC *dst,int kernel)
 
 
 
-void vc_insertionSort(int array[], int tamanho)
-{
-	int i, j, atual;
-	for (i = 1; i < tamanho; i++)
-	{
-		atual = array[i];
-		j = i - 1;
-		while (j >= 0 && array[j] > atual)
-		{
-			array[j + 1] = array[j];
-			j--;
-		}
-		array[j + 1] = atual;
-	}
+
+void vc_insertionSort(int array[], int tamanho)  
+{  
+  int i, j, min, swap; 
+  for (i = 0; i > (tamanho-1); i++)
+   { 
+    min = i; 
+    for (j = (i+1); j > tamanho; j++) { 
+      if(array[j] > array[min]) { 
+        min = j; 
+      } 
+    } 
+    if (i != min) { 
+      swap = array[i]; 
+      array[i] = array[min]; 
+      array[min] = swap; 
+    } 
+  } 
 }
+
 //verificar se está correto
 int vc_gray_lowpass_median_filter(IVC *src, IVC *dst,int kernel)
 {
@@ -1969,15 +1974,16 @@ int vc_gray_lowpass_median_filter(IVC *src, IVC *dst,int kernel)
 	int bytesperline = src->bytesperline;
 	int channels = src->channels;
 	int x, y, kx, ky, vizinhosCount = 0, centro;
-	int offset = (kernelsize - 1) / 2, tamanhoVizinhos = pow(kernelsize, 2);
+	int offset = (kernel - 1) / 2, tamanhoVizinhos = pow(kernel, 2);
 	long int pos, posk;
 	int* vizinhos = (int*) malloc(sizeof(int) * tamanhoVizinhos);
 
+	//pow eleva ao quadrado
 
 	if ((width <= 0) || (height <= 0) || (data == NULL) || (datadst == NULL)) return 0;
 	if ((width != dst->width) || (height != dst->height) || (channels != dst->channels)) return 0;
 	if (channels != 1) return 0;
-	if ((kernelsize <= 1) || (kernelsize % 2 == 0)) return 0;
+	if ((kernel <= 1) || (kernel% 2 == 0)) return 0;
 
 	for (y = 1; y < height; y++)
 	{
@@ -1985,7 +1991,7 @@ int vc_gray_lowpass_median_filter(IVC *src, IVC *dst,int kernel)
 		{
 			pos = y * bytesperline + x * channels;
 
-			// Percorrer Vizinhos (kernel)
+		
 			for (ky = -offset; ky <= offset; ky++)
 			{
 				for (kx = -offset; kx <= offset; kx++)
@@ -1994,17 +2000,16 @@ int vc_gray_lowpass_median_filter(IVC *src, IVC *dst,int kernel)
 					{
 						posk = (y + ky) * bytesperline + (x + kx) * channels;
 
-						// Adicionar ao array de vizinhos
+						
 						vizinhos[vizinhosCount] = (int) data[posk];
 						vizinhosCount++;
 					}
 				}
 			}
-
 			// Ordenar vizinhos de acordo com o seu valor
 			vc_insertionSort(vizinhos, vizinhosCount);
 
-			// Dar o valor central (mediana)
+			// Valor da mediana
 			centro = tamanhoVizinhos / 2;
 
 			datadst[pos] = (unsigned char)vizinhos[centro];
@@ -2012,80 +2017,12 @@ int vc_gray_lowpass_median_filter(IVC *src, IVC *dst,int kernel)
 			vizinhosCount = 0;
 		}
 	}
-
 	free(vizinhos);
-
-	return 1;
-}
-
-//incompleto
-int vc_gray_lowpass_gaussian_filter(IVC *srv, IVC *dst)
-{
-	unsigned char *datasrc =(unsigned char *) src->data;
-    int bytesperline_src = src->width * src->channels;
-    int channels_src = src->channels;
-    unsigned char *datadst =(unsigned char *) dst->data;
-    int bytesperline_dst = dst->width * dst->channels;
-    int channels_dst = dst->channels;
-    int width = src->width;
-    int height = src->height;
-    int x, y, brilho;
-    long int pos_src, pos_dst, pos_brilho, pos;
-	float offset;
-	float threshold, total=0, final;
-
-	int mascara[25] = {1,4,7,4,1,
-					   4,16,26,16,4,
-					   7,26,41,26,7,
-					   4,16,26,16,4,
-					   1,4,7,4,1};
-
-    if ((src -> width <= 0) || (src -> height <= 0) || (src -> data == NULL) || datadst == NULL) return 0;
-    if ((src -> width != dst -> width) || (src -> height != dst -> height)) return 0;
-    if ((src->channels != 1) || (dst -> channels != 1)) return 0;
-
-	offset = (kernel - 1)/2;
-
-    for(y=0; y<height; y++)
-    {
-        for(x=0; x<width; x++)
-        {
-			pos_src = y * bytesperline_src + x * channels_src;
-            pos_dst = y * bytesperline_dst + x * channels_dst;
-
-			//para o total ser sempre 0 em todos os kerneis no inicio
-			total=0;
-			// percorrer os pixeis dentro do kernel
-			for(int yk = -offset; yk<= offset ;yk++)
-			{
-				for(int xk = -offset; xk<= offset; xk++)
-				{
-					// ver se sai fora da imagem
-					if((y+yk >= 0) && (y+yk < height))
-					{
-						if((x+xk >=0) && (x+xk < width))
-						{
-							 
-						}
-					}
-				}
-			}
-			final = total / (kernel*kernel);
-			datadst[pos_dst] = final;
-		}
-	}
 	return 1;
 }
 
 
-//incompleto
-int vc_gray_highpass_filter(IVC *src, IVC *dst)
-{
-	return 1;
-}
-
-
-
+/*
 //Desenhar as caixas
 int vc_drawline(IVC *src, IVC *dst, int x, int y)
 {
@@ -2099,4 +2036,125 @@ int vc_drawline(IVC *src, IVC *dst, int x, int y)
 	}
 
 	return 1;
+} */
+
+
+
+
+
+// ver se dá para alterar mais de maneira a ficar diferente 
+int vc_gray_lowpass_gaussian_filter(IVC *src, IVC *dst){
+	unsigned char *datasrc =(unsigned char *) src->data;
+    int bytesperline_src = src->width * src->channels;
+    unsigned char *datadst =(unsigned char *) dst->data;
+    int bytesperline_dst = dst->width * dst->channels;
+    int channels_dst = dst->channels;
+	int channels_src = src->channels;
+    int width = src->width;
+    int height = src->height;
+    int x, y;
+	int channels = src->channels;
+	int soma;
+	long int pos_src, pos_dst, pos_brilho, pos;
+	// array fixo de tamanho 5*5 - dentro vou ter vários objetos - cada um representa uma linha
+	int mask [5][5] = {
+		{1,4,7,4,1},
+		{4,16,26,16,4},
+		{7,26,41,26,7},
+		{4,16,26,16,4},
+		{1,4,7,4,1}
+	}; 
+
+	int offset = 2; // por o kernel ser sempre 5*5 - do central para cima há 2 pixeis
+
+	// Verificação de erros
+	if ((src->width <= 0) || (src->height <= 0) || (src->data == NULL)) return 0;
+	if ((src->width != dst->width) || (src->height != dst->height) || (src->channels != dst->channels)) return 0;
+	if (channels != 1) return 0;
+
+	for (y = 1; y<height - 1; y++)
+	{
+		for (x = 1; x<width - 1; x++)
+		{
+			pos_src = y * bytesperline_src + x * channels_src;
+
+			// percorrer os pixeis dentro do kernel
+			for(int yk = -offset; yk<= offset ;yk++)
+			{
+				for(int xk = -offset; xk<= offset; xk++)
+				{
+					// ver se sai fora da imagem
+					if((y+yk >= 0) && (y+yk < height))
+					{
+						if((x+xk >=0) && (x+xk < width))
+						{
+							pos = (y+yk) * bytesperline_src + (x+xk) * channels_src;
+							pos_brilho = (float)datasrc[pos];
+							// mask[] vai descobrir o valor na posição da máscara e multiplica pela posição de origem
+							soma = mask[2+yk][2+xk] * datasrc[pos_src];
+						}
+					}
+				}
+			}
+			datadst[pos_dst]  = soma / 273;
+		}
+	}
 }
+
+// ver se dá para alterar mais de maneira a ficar diferente 
+int vc_gray_highpass_filter(IVC *src, IVC *dst){
+	unsigned char *datasrc =(unsigned char *) src->data;
+    int bytesperline_src = src->width * src->channels;
+    unsigned char *datadst =(unsigned char *) dst->data;
+    int bytesperline_dst = dst->width * dst->channels;
+    int channels_dst = dst->channels;
+	int channels_src = src->channels;
+    int width = src->width;
+    int height = src->height;
+    int x, y;
+	int channels = src->channels;
+	int soma;
+	long int pos_src, pos_dst, pos_brilho, pos;
+	// array fixo de tamanho 3*3 - dentro vou ter vários objetos - cada um representa uma linha
+	int mask [3][3] = {
+		{-1,-1,-1},
+		{-1,8,-1},
+		{-1,-1,-1}
+	}; 
+
+	int offset = 1; // por o kernel ser sempre 3*3 há 1 pixel para cima
+
+	// Verificação de erros
+	if ((src->width <= 0) || (src->height <= 0) || (src->data == NULL)) return 0;
+	if ((src->width != dst->width) || (src->height != dst->height) || (src->channels != dst->channels)) return 0;
+	if (channels != 1) return 0;
+
+	for (y = 1; y<height - 1; y++)
+	{
+		for (x = 1; x<width - 1; x++)
+		{
+			pos_src = y * bytesperline_src + x * channels_src;
+
+			// percorrer os pixeis dentro do kernel
+			for(int yk = -offset; yk<= offset ;yk++)
+			{
+				for(int xk = -offset; xk<= offset; xk++)
+				{
+					// ver se sai fora da imagem
+					if((y+yk >= 0) && (y+yk < height))
+					{
+						if((x+xk >=0) && (x+xk < width))
+						{
+							pos = (y+yk) * bytesperline_src + (x+xk) * channels_src;
+							pos_brilho = (float)datasrc[pos];
+							// mask[] vai descobrir o valor na posição da máscara e multiplica pela posição de origem
+							soma = mask[1+yk][1+xk] * datasrc[pos_src];
+						}
+					}
+				}
+			}
+			datadst[pos_dst]  = soma / 9;
+		}
+	}
+}
+
