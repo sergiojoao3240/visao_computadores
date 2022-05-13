@@ -2089,7 +2089,7 @@ int vc_gray_lowpass_gaussian_filter(IVC* src, IVC* dst)
 	if (channels != 1) return 0;
 
 	// Atribuir valores da máscara
-	int mascara[25] = { 1,4,7,4,1,
+	int mask[25] = { 1,4,7,4,1,
 					   4,16,26,16,4,
 					   7,26,41,26,7,
 					   4,16,26,16,4,
@@ -2114,7 +2114,7 @@ int vc_gray_lowpass_gaussian_filter(IVC* src, IVC* dst)
 					{
 						pos_int = (y + yk) * bytesperline + (x + xk);
 
-						soma += (float)data[pos_int] * (float)mascara[ind];
+						soma += (float)data[pos_int] * (float)mask[ind];
 						ind++;
 					}
 				}
@@ -2129,60 +2129,54 @@ int vc_gray_lowpass_gaussian_filter(IVC* src, IVC* dst)
 }
 
 
-// ver se dá para alterar mais de maneira a ficar diferente
 int vc_gray_highpass_filter(IVC *src, IVC *dst)
 {
-	unsigned char *datasrc =(unsigned char *) src->data;
-    int bytesperline_src = src->width * src->channels;
-    unsigned char *datadst =(unsigned char *) dst->data;
-    int bytesperline_dst = dst->width * dst->channels;
-    int channels_dst = dst->channels;
-	int channels_src = src->channels;
-    int width = src->width;
-    int height = src->height;
-    int x, y;
+	int kernelsize = 3;
+	unsigned char* data = (unsigned char*)src->data;
+	unsigned char* datadst = (unsigned char*)dst->data;
+	int width = src->width;
+	int height = src->height;
+	int bytesperline = src->bytesperline;
 	int channels = src->channels;
-	int soma;
-	long int pos_src, pos_dst, pos_brilho, pos;
-	// array fixo de tamanho 3*3 - dentro vou ter vários objetos - cada um representa uma linha
-	int mask [3][3] = {
-		{-1,-1,-1},
-		{-1,8,-1},
-		{-1,-1,-1}
-	};
+	int x, y, ind = 0;
+	long int pos, pos_int;
+	float soma = 0;
 
-	int offset = 1; // por o kernel ser sempre 3*3 há 1 pixel para cima
+	int mask [9] = {-1,-1,-1,
+					-1, 8,-1,
+					-1,-1,-1};
+
+	int offset = 1;
 
 	// Verificação de erros
 	if ((src->width <= 0) || (src->height <= 0) || (src->data == NULL)) return 0;
 	if ((src->width != dst->width) || (src->height != dst->height) || (src->channels != dst->channels)) return 0;
 	if (channels != 1) return 0;
 
-	for (y = 1; y<height - 1; y++)
+	for (y = 0; y<height; y++)
 	{
-		for (x = 1; x<width - 1; x++)
+		for (x = 0; x<width; x++)
 		{
-			pos_src = y * bytesperline_src + x * channels_src;
+			pos = y * bytesperline + x;
+			soma = 0;
+			ind = 0;
 
-			// percorrer os pixeis dentro do kernel
 			for(int yk = -offset; yk<= offset ;yk++)
 			{
 				for(int xk = -offset; xk<= offset; xk++)
 				{
-					// ver se sai fora da imagem
 					if((y+yk >= 0) && (y+yk < height))
 					{
 						if((x+xk >=0) && (x+xk < width))
 						{
-							pos = (y+yk) * bytesperline_src + (x+xk) * channels_src;
-							pos_brilho = (float)datasrc[pos];
-							// mask[] vai descobrir o valor na posição da máscara e multiplica pela posição de origem
-							soma = mask[1+yk][1+xk] * datasrc[pos_src];
+							pos_int = (y+yk) * bytesperline + (x+xk);
+							soma += (float)data[pos_int] * (float)mask[ind];
+							ind ++;
 						}
 					}
 				}
 			}
-			datadst[pos_dst]  = soma / 9;
+			datadst[pos]  = soma / 9;
 		}
 	}
 	return 1;
